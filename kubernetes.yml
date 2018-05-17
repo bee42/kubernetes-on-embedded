@@ -1,0 +1,31 @@
+- hosts: k8s-master
+  become: true
+  gather_facts: False
+  vars_files: 
+    - vars/main.yml
+  
+  tasks:
+    - name: install k8s 
+      script: "kubeadm-ubuntu.sh master {{network_address_master}}"
+    - name: Copy k8s-config
+      fetch:
+        src: /etc/kubernetes/admin.conf
+        dest: "{{playbook_dir}}/secrets"
+    - name: Copy join-command
+      fetch:
+        src: /tmp/kubeadm_join
+        dest: "{{playbook_dir}}/secrets"
+
+- hosts: k8s-worker
+  become: true
+  gather_facts: False
+  vars_files: 
+    - vars/main.yml
+  
+  tasks:
+    - name: Copy join-command
+      copy:
+        src: "{{playbook_dir}}/secrets/{{network_address_master}}/tmp/kubeadm_join"
+        dest: /tmp/kubeadm_join
+    - name: install and join k8s 
+      script: "kubeadm-ubuntu.sh node {{network_address_master}}"
