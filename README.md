@@ -90,7 +90,7 @@ $ flash -n "MY_HOSTNAME" -u "user-data.yml" hypriotos-rpi-v${HOS_VERSION}.img
 
 ## Raspberry-Pi starten
 
-Nach dem Einsetzen der Karten könnt Ihr den Raspberry-PI starten. Wenn alles geklappt sollte dieser mit dem WLAN verbunden sein. Nun könnt Ihr Euch mit dem PI per SSH verbinden.
+Nach dem Einsetzen der Karten könnt Ihr den Raspberry-PI starten. Nun könnt Ihr Euch zum Test mit dem PI per SSH verbinden.
 
 ```bash
 $ ssh pirate@<ip>
@@ -100,7 +100,7 @@ __Frage__: Wie bekommt eigentlich heraus welche IP dem PI vom DHCP Server zugeor
 ```
 # install nmap
 $ brew install nmap
-$ nmap -sn 192.168.178.0/24
+$ nmap -sn 192.168.1.0/24 # Durch Euer Netz ersetzen
 ```
 
 Das Passwort für den Nutzer __pirate__ lautet: **hypriot**. 
@@ -113,20 +113,9 @@ Im Blog der Hypriot Piraten findet Ihr jede Mengen Erklärungen zum Thema Docker
 
 ## Kubernetes-Cluster installieren
 
-Für die folgenden Schritte bitte per ssh auf dem ausgewählten Master-RPI springen, z.B.
-
-```bash
-ssh pirate@192.168.1.11
-```
-Für die Installation benötigen wir Root-Rechte, alternativ kann den foilgenden Befehlen jeweils ```sudo``` vorangestellt werden.
-
-```bash
-sudo -i 
-```
-
 ### Installation des Kubernetes-Masters
 
-Zur Ausführung unseres Installationsscripts auf den einzelen RPIs benutzen wir ![Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html). 
+Zur Ausführung unseres Installationsscripts auf den einzelen RPIs benutzen wir [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html). 
 
 Dafür benötigen wir zunächst ein Inventory:
 
@@ -147,7 +136,7 @@ Ansible verbindet sich per SSH auf die zu verwaltenden Rechner, dort muss also �
 
 ```bash
 #Schlüssel erzeugen
-ssh-keygen -t rsa -C "name@example.org"
+ssh-keygen -t ed25519 -C "name@example.org"
 
 #Öffentlichen Schlüssel auf alle RPIs kopieren
 ssh-copy-id pirate@192.168.1.11
@@ -170,12 +159,8 @@ ansible -u pirate --key=PATH_TO_MY_PRIVATE_KEY -m ping all
 
 ### Cluster erzeugen
 
+So, wenn alle Vorebereitungen abgeschlossen sind, kann der Kubernetes-Cluster erzeugt werden. Ein RPI wird zum Master und die restlichen werden die Nodes.
+
 ```bash
 ansible-playbook -u pirate --key=PATH_TO_MY_PRIVATE_KEY kubernetes.yml
-```
-
-Viel Spaß
-
-```
-Claus Frein <claus.frein@bee42.com> @cfrein
 ```
