@@ -6,7 +6,7 @@
   
   tasks:
     - name: install k8s 
-      script: "kubeadm-ubuntu.sh master {{network_address_master}}"
+      script: "bootstrap.sh master {{network_address_master}}"
     - name: Copy k8s-config
       fetch:
         src: /etc/kubernetes/admin.conf
@@ -28,4 +28,4 @@
         src: "{{playbook_dir}}/secrets/{{network_address_master}}/tmp/kubeadm_join"
         dest: /tmp/kubeadm_join
     - name: install and join k8s 
-      script: "kubeadm-ubuntu.sh node {{network_address_master}}"
+      script: "bootstrap.sh node {{network_address_master}}"
