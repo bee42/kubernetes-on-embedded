@@ -45,12 +45,12 @@ sudo mv flash /usr/local/bin/flash
 
 ### Download des Hypriot OS-Images
 
-Download des Images:
+Da Kubernetes offziel nur Docker CE bis 17.03 unterstützt, nehmen wir ein das Image V1.4.0:
 
 ```bash
 mkdir OS-Images
 cd OS-Images
-HOS_VERSION=1.9.0
+HOS_VERSION=1.4.0
 HOS_URL=https://github.com/hypriot/image-builder-rpi/releases/download
 curl -LO ${HOS_URL}/v${HOS_VERSION}/hypriotos-rpi-v${HOS_VERSION}.img.zip
 ```
@@ -59,25 +59,6 @@ Entpacken des Images:
 
 ```bash
 $ unzip hypriotos-rpi-v${HOS_VERSION}.img.zip
-```
-
-### Optional: Erstellen der Konfiguration `user-data.yml`
-
-In dieser Datei können diverse Einstellungen vorgenommen werden, z.B. der zu vergebende Hostname, anzulegende User, oder, wie im folgenden Beispiel, SSH-Public-Keys für den passwortlosen Zugriff:
-
-```yml
-users:
-  - name: pirate
-    gecos: "Hypriot Pirate"
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
-    groups: users,docker,video,input
-    plain_text_passwd: hypriot
-    lock_passwd: false
-    ssh_pwauth: true
-    chpasswd: { expire: false }
-    ssh_authorized_keys:
-      - 'ssh-ed25519 ABCDEFGHIJKLMNOP0123456789 claus.frein@bee42.com'
 ```
 
 ### Flashen des OS-Images
@@ -117,19 +98,30 @@ Im Blog der Hypriot Piraten findet Ihr jede Mengen Erklärungen zum Thema Docker
 
 Zur Ausführung unseres Installationsscripts auf den einzelen RPIs benutzen wir [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html). 
 
-Dafür benötigen wir zunächst ein Inventory:
+Dafür benötigen wir zunächst ein Inhaltsverzeichnis. Wir haben mehrere Cluster, deshalb ist die Konfiguration etwas größer angelegt:
 
 ```ini
-[k8s-master]
+[cluster-1-master]
 192.168.1.11
 
-[k8s-nodes]
+[cluster-1-nodes]
 192.168.1.12
 192.168.1.13
 
-[k8s-all:children]
-k8s-master
-k8s-nodes
+[cluster-1:children]
+cluster-1-master
+cluster-1-nodes
+
+[cluster-1:vars]
+fqdn_master="bee42-crew-01-001.bee42"
+network_address_master="192.168.1.11"
+
+[master:children]
+cluster-1-master
+
+[nodes:children]
+cluster-1-nodes
+
 ```
 
 Ansible verbindet sich per SSH auf die zu verwaltenden Rechner, dort muss also öffentlicher SSH-Key hinterlegt sein. Falls Ihr noch keinen habt, hier ein kleines Beispiel:
@@ -162,5 +154,13 @@ ansible -u pirate --key=PATH_TO_MY_PRIVATE_KEY -m ping all
 So, wenn alle Vorebereitungen abgeschlossen sind, kann der Kubernetes-Cluster erzeugt werden. Ein RPI wird zum Master und die restlichen werden die Nodes.
 
 ```bash
-ansible-playbook -u pirate --key=PATH_TO_MY_PRIVATE_KEY kubernetes.yml
+ansible-playbook -u pirate --key=PATH_TO_MY_PRIVATE_KEY -i cluster -l cluster-1 kubernetes.yml
+```
+
+### Cluster vernichten
+
+Manchmal möchte man den Cluster abreissen und vielleicht in einer anderen Version neu bauen, deshalb gibt es auch ein Reset-Playbook:
+
+```bash
+ansible-playbook -u pirate --key=PATH_TO_MY_PRIVATE_KEY -i cluster -l cluster-1 reset.yml
 ```

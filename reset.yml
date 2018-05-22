@@ -1,0 +1,21 @@
+- hosts: all
+  become: true
+  gather_facts: False
+  
+  tasks:
+    - name: delete k8s-cluster
+      command: kubeadm reset
+    - name: remove old pki 
+      file:
+        path: /etc/kubernetes/pki
+        state: absent
+    - name: remove k8s-pinning
+      file:
+        path: /etc/apt/preferences.d/k8s
+        state: absent
+    - name: uninstall k8s-binaries
+      apt:
+        name: kubeadm,kubelet,kubectl,kubernetes-cni
+        state: absent
+        purge: yes
+    

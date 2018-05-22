@@ -2,7 +2,7 @@
 
 set -eu
 
-K8S_VERSION=${K8S_VERSION:-1.10}
+K8S_VERSION=${K8S_VERSION:-1.10.2}
 
 #####
 # Disable swap
@@ -66,7 +66,7 @@ case "${1}" in
             ADDRESS="$(ip -4 addr show eth0 | grep "inet" | head -1 |awk '{print $2}' | cut -d/ -f1)"
 
             echo Executing kubeadm init 
-            kubeadm init --apiserver-advertise-address=${ADDRESS} --kubernetes-version "stable-$K8S_VERSION"
+            kubeadm init --apiserver-advertise-address=${ADDRESS} --kubernetes-version "$K8S_VERSION"
 
             echo copy token
             kubeadm token create --print-join-command > /tmp/kubeadm_join
@@ -80,6 +80,31 @@ case "${1}" in
             #  Network-Layer
             kubectl apply -f \
             "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+            #curl https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml| sed "s/amd64/arm/g" | kubectl create -f -
+            
+            cat > helm-rbac.yaml << EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tiller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: tiller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: tiller
+    namespace: kube-system
+EOF
+            kubectl apply -f helm-rbac.yaml
+            #helm init --service-account tiller
+
             ;;
 
         node)

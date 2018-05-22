@@ -1,8 +1,6 @@
-- hosts: k8s-master
+- hosts: master
   become: true
   gather_facts: False
-  vars_files: 
-    - vars/main.yml
   
   tasks:
     - name: install k8s 
@@ -16,11 +14,9 @@
         src: /tmp/kubeadm_join
         dest: "{{playbook_dir}}/secrets"
 
-- hosts: k8s-worker
+- hosts: nodes
   become: true
   gather_facts: False
-  vars_files: 
-    - vars/main.yml
   
   tasks:
     - name: Copy join-command
