@@ -5,9 +5,9 @@
   tasks:
     - name: delete k8s-cluster
       command: kubeadm reset
-    - name: remove old pki 
+    - name: remove kubernetes-config-folder 
       file:
-        path: /etc/kubernetes/pki
+        path: /etc/kubernetes
         state: absent
     - name: remove k8s-pinning
       file:

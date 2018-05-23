@@ -1,8 +1,13 @@
 #!/bin/bash
+# Parameter:
+# 1 - Master/node
+# 2 - IP Master
+# 3 - Kubernetes-version
 
 set -eu
 
-K8S_VERSION=${K8S_VERSION:-1.10.2}
+K8S_VERSION=$3
+K8S_VERSION=${K8S_VERSION:-1.9.6}
 
 #####
 # Disable swap
@@ -77,6 +82,7 @@ case "${1}" in
 
             echo Deploying Network Layer
 
+            sleep 30
             #  Network-Layer
             kubectl apply -f \
             "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"

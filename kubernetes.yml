@@ -1,10 +1,11 @@
 - hosts: master
   become: true
   gather_facts: False
-  
+  vars:
+    kubernetes_version: "{{ lookup('env', 'KUBERNETES_VERSION')| default('1.9.6',true) }}"
   tasks:
     - name: install k8s 
-      script: "bootstrap.sh master {{network_address_master}}"
+      script: "bootstrap.sh master {{network_address_master}} {{ kubernetes_version }}"
     - name: Copy k8s-config
       fetch:
         src: /etc/kubernetes/admin.conf
@@ -17,11 +18,12 @@
 - hosts: nodes
   become: true
   gather_facts: False
-  
+  vars:
+    kubernetes_version: "{{ lookup('env', 'KUBERNETES_VERSION')| default('1.9.6',true) }}"
   tasks:
     - name: Copy join-command
       copy:
         src: "{{playbook_dir}}/secrets/{{network_address_master}}/tmp/kubeadm_join"
         dest: /tmp/kubeadm_join
     - name: install and join k8s 
-      script: "bootstrap.sh node {{network_address_master}}"
+      script: "bootstrap.sh node {{network_address_master}} {{ kubernetes_version }}"
