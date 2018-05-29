@@ -8,6 +8,7 @@ set -eu
 
 K8S_VERSION=$3
 K8S_VERSION=${K8S_VERSION:-1.9.6}
+DOCKER_VERSION=${DOCKER_VERSION:-17.03}
 
 #####
 # Disable swap
@@ -33,6 +34,20 @@ cat > /etc/docker/daemon.json <<EOF
 }
 EOF
 
+
+tee /etc/apt/preferences.d/docker <<EOF
+Package: docker-ce
+Pin: version $DOCKER_VERSION.*
+Pin-Priority: 1000
+EOF
+
+apt-get remove docker docker-engine docker.io docker-ce -y
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+echo "deb [arch=armhf] https://download.docker.com/linux/debian \
+     $(lsb_release -cs) stable" | \
+     tee /etc/apt/sources.list.d/docker.list
+apt-get update
+apt-get install docker-ce
 systemctl daemon-reload
 systemctl restart docker
 
@@ -82,7 +97,16 @@ case "${1}" in
 
             echo Deploying Network Layer
 
-            sleep 30
+            MSG="Wating for Kubernets-API to get ready"
+            COUNT=10
+            DELAY=6
+            COMMAND='kubectl get no'
+            while eval $COMMAND 2> /dev/null ; [ $? -ne 0 -a $COUNT -gt 0 ];do
+              sleep $DELAY
+              COUNT=$(( $COUNT-1 ))
+              echo $MSG - Counter: $COUNT
+            done✔ ~/dev
+
             #  Network-Layer
             kubectl apply -f \
             "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
