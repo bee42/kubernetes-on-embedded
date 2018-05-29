@@ -97,7 +97,16 @@ case "${1}" in
 
             echo Deploying Network Layer
 
-            sleep 30
+            MSG="Wating for Kubernets-API to get ready"
+            COUNT=10
+            DELAY=6
+            COMMAND='kubectl get no'
+            while eval $COMMAND 2> /dev/null ; [ $? -ne 0 -a $COUNT -gt 0 ];do
+              sleep $DELAY
+              COUNT=$(( $COUNT-1 ))
+              echo $MSG - Counter: $COUNT
+            done✔ ~/dev
+
             #  Network-Layer
             kubectl apply -f \
             "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
