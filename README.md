@@ -1,5 +1,9 @@
-# kubernetes-on-embedded
-Build your own kubernetes datacenter with hybrid embedded devices
+# Kubernetes-On-Embedded
+
+Dies ist das Repo für unseren Blogpost https://bee42.com/de/blog/Kubernetes_Cluster_Embedded/, schaut mal rein!
+
+_Achtung: Mit der Hypriot-Version 1.4.0 gab es einen schwerwiegenden Fehler: Die Machine-ID wurde nicht neu generiert und war deshalb bei allen RPI's identisch. Das führte zu [Problemen](https://stackoverflow.com/questions/49113253/kubernetes-pods-stuck-at-containercreating) mit dem Netzwerk-Layer!_
+
 
 ![Layout:](layout.png)
 
@@ -45,12 +49,12 @@ sudo mv flash /usr/local/bin/flash
 
 ### Download des Hypriot OS-Images
 
-Da Kubernetes offziel nur Docker CE bis 17.03 unterstützt, nehmen wir ein das Image V1.4.0:
+Da Kubernetes offziel nur Docker CE bis 17.03 unterstützt, nehmen wir das Image V1.7.1 und (re-)installieren im weiteren Verlauf darauf Docker in der passenden Version:
 
 ```bash
 mkdir OS-Images
 cd OS-Images
-HOS_VERSION=1.4.0
+HOS_VERSION=1.7.1
 HOS_URL=https://github.com/hypriot/image-builder-rpi/releases/download
 curl -LO ${HOS_URL}/v${HOS_VERSION}/hypriotos-rpi-v${HOS_VERSION}.img.zip
 ```
@@ -60,6 +64,10 @@ Entpacken des Images:
 ```bash
 $ unzip hypriotos-rpi-v${HOS_VERSION}.img.zip
 ```
+
+### Erstellen der Konfiguration `user-data.yml`
+
+In dieser Datei können diverse Einstellungen vorgenommen werden, z.B. der zu vergebende Hostname, anzulegende User, oder, wie im folgenden Beispiel, SSH-Public-Keys für den passwortlosen Zugriff. Ein Beispiel findet Ihr im Repo.
 
 ### Flashen des OS-Images
 
@@ -164,3 +172,4 @@ Manchmal möchte man den Cluster abreissen und vielleicht in einer anderen Versi
 ```bash
 ansible-playbook -u pirate --key=PATH_TO_MY_PRIVATE_KEY -i cluster -l cluster-1 reset.yml
 ```
+
