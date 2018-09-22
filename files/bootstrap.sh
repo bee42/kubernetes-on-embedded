@@ -77,8 +77,6 @@ apt-get update && apt-get install kubeadm kubelet kubectl kubernetes-cni -y
 
 systemctl enable docker kubelet
 
-sed -i -e 's/AUTHZ_ARGS=.*/AUTHZ_ARGS="/' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-
 systemctl daemon-reload
 
 case "${1}" in
@@ -105,36 +103,12 @@ case "${1}" in
               sleep $DELAY
               COUNT=$(( $COUNT-1 ))
               echo $MSG - Counter: $COUNT
-            done✔ ~/dev
+            done
 
             #  Network-Layer
             kubectl apply -f \
             "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
-            #curl https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml| sed "s/amd64/arm/g" | kubectl create -f -
-            
-            cat > helm-rbac.yaml << EOF
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: tiller
-  namespace: kube-system
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRoleBinding
-metadata:
-  name: tiller
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-  - kind: ServiceAccount
-    name: tiller
-    namespace: kube-system
-EOF
-            kubectl apply -f helm-rbac.yaml
-            #helm init --service-account tiller
-
+            #curl https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml| sed "s/amd64/arm/g" | kubectl create -f -           
             ;;
 
         node)
