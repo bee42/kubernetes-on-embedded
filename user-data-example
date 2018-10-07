@@ -22,10 +22,24 @@ users:
     lock_passwd: false
     ssh_pwauth: true
     chpasswd: { expire: false }
+  - name: peter
+    gecos: "bee42 crew"
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    groups: users,docker,video,input
+    lock_passwd: false
+    chpasswd: { expire: false }
     ssh_authorized_keys:
-      - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFaMxEwf5lwpyjn1aazYqCsmegzmjBKGxJjK2+f5UarS nmietz@digitalocean'
       - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFl546jxIfE2XAxHOBTsKL/KRC11eoNHP7Q8y4InJrfp peter.rossbach@bee42.com'
-
+  - name: niclas
+    gecos: "bee42 crew"
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    groups: users,docker,video,input
+    lock_passwd: false
+    chpasswd: { expire: false }
+    ssh_authorized_keys:
+      - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILkplD4FXV/o5Dcd6Rik9XCU/n1Kgq8h4lIGqDgJNDSz niclas.mietz@bee42.com'
 # # Set the locale of the system
 # locale: "en_US.UTF-8"
 
