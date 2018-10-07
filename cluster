@@ -1,62 +1,62 @@
 [cluster-1-master]
-192.168.1.11
+192.168.0.11
 
 [cluster-1-nodes]
-192.168.1.12
-192.168.1.13
+192.168.0.12
+192.168.0.13
 
 [cluster-1:children]
 cluster-1-master
 cluster-1-nodes
 
 [cluster-1:vars]
-fqdn_master="bee42-crew-01-001.bee42"
-network_address_master="192.168.1.11"
+fqdn_master="bee42-crew-01-001.local"
+network_address_master="192.168.0.11"
 
 [cluster-2-master]
-192.168.1.21
+192.168.0.21
 
 [cluster-2-nodes]
-192.168.1.22
-192.168.1.23
+192.168.0.22
+192.168.0.23
 
 [cluster-2:children]
 cluster-2-master
 cluster-2-nodes
 
 [cluster-2:vars]
-fqdn_master="bee42-crew-02-001.bee42"
-network_address_master="192.168.1.21"
+fqdn_master="bee42-crew-02-001.local"
+network_address_master="192.168.0.21"
 
 [cluster-3-master]
-192.168.1.31
+192.168.0.31
 
 [cluster-3-nodes]
-192.168.1.32
-192.168.1.33
+192.168.0.32
+192.168.0.33
 
 [cluster-3:children]
 cluster-3-master
 cluster-3-nodes
 
 [cluster-3:vars]
-fqdn_master="bee42-crew-03-001.bee42"
-network_address_master="192.168.1.31"
+fqdn_master="bee42-crew-03-001.local"
+network_address_master="192.168.0.31"
 
 [cluster-4-master]
-192.168.1.41
+192.168.0.41
 
 [cluster-4-nodes]
-192.168.1.42
-192.168.1.43
+192.168.0.42
+192.168.0.43
 
 [cluster-4:children]
 cluster-4-master
 cluster-4-nodes
 
 [cluster-4:vars]
-fqdn_master="bee42-crew-04-001.bee42"
-network_address_master="192.168.1.41"
+fqdn_master="bee42-crew-04-001.local"
+network_address_master="192.168.0.41"
 
 [master:children]
 cluster-1-master
