@@ -2,7 +2,7 @@
   become: true
   gather_facts: False
   vars:
-    kubernetes_version: "{{ lookup('env', 'KUBERNETES_VERSION')| default('1.9.6',true) }}"
+    kubernetes_version: "{{ lookup('env', 'KUBERNETES_VERSION')| default('1.12.0',true) }}"
   tasks:
     - name: install k8s 
       script: "bootstrap.sh master {{network_address_master}} {{ kubernetes_version }}"
@@ -19,7 +19,7 @@
   become: true
   gather_facts: False
   vars:
-    kubernetes_version: "{{ lookup('env', 'KUBERNETES_VERSION')| default('1.9.6',true) }}"
+    kubernetes_version: "{{ lookup('env', 'KUBERNETES_VERSION')| default('1.12.0',true) }}"
   tasks:
     - name: Copy join-command
       copy:

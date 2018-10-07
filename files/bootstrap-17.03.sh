@@ -7,8 +7,8 @@
 set -eu
 
 K8S_VERSION=$3
-K8S_VERSION=${K8S_VERSION:-1.12.}
-K8S_CNI_VERSION=${K8S_CNI_VERSION:-0.6.0-00}
+K8S_VERSION=${K8S_VERSION:-1.9.6}
+DOCKER_VERSION=${DOCKER_VERSION:-17.03}
 
 #####
 # Disable swap
@@ -16,6 +16,43 @@ K8S_CNI_VERSION=${K8S_CNI_VERSION:-0.6.0-00}
 swapoff -a
 sed -e 's-^\(.*swap.*\)-#\1-' -i /etc/fstab||true
 swapon -s
+
+#####
+# Setup docker
+#####
+apt-get update
+apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    software-properties-common
+
+cat > /etc/docker/daemon.json <<EOF
+{
+  "insecure-registries": ["registry.bee42:5000","registry.bee42:80"],
+  "registry-mirrors": [ "http://registry.bee42:5001" ]
+}
+EOF
+
+
+tee /etc/apt/preferences.d/docker <<EOF
+Package: docker-ce
+Pin: version $DOCKER_VERSION.*
+Pin-Priority: 1000
+EOF
+
+apt-get remove docker docker-engine docker.io docker-ce -y
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+echo "deb [arch=armhf] https://download.docker.com/linux/debian \
+     $(lsb_release -cs) stable" | \
+     tee /etc/apt/sources.list.d/docker.list
+apt-get update
+apt-get install docker-ce
+systemctl daemon-reload
+systemctl restart docker
+
+#apt-get install python-pip joe -y
+#sudo -H pip install --upgrade pip
 
 #####
 #Setup Kubernetes
@@ -32,18 +69,13 @@ Pin-Priority: 1000
 Package: kubectl
 Pin: version $K8S_VERSION*
 Pin-Priority: 1000
-
-Package: kubernetes-cni
-Pin: version $K8S_CNI_VERSION
-Pin-Priority: 1000
-
 EOF
 
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 echo 'deb http://apt.kubernetes.io/ kubernetes-xenial main' | tee /etc/apt/sources.list.d/kubernetes.list
-apt-get update && apt-get install kubernetes-cni kubeadm kubelet kubectl -y 
+apt-get update && apt-get install kubeadm kubelet kubectl kubernetes-cni -y 
 
-systemctl enable kubelet
+systemctl enable docker kubelet
 
 systemctl daemon-reload
 
