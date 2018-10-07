@@ -41,6 +41,7 @@ Stand 2018-10 ca. 290 Euro
 * Kühler für die PI kaufen und installieren
 * OnOff Shim von Pimoroni installieren oder selber bauen
   * https://shop.pimoroni.com/products/onoff-shim
+  * http://www.netzmafia.de/skripten/hardware/RasPi/Projekt-OnOff/index.html
 * Nicht vergessen es wird ein Ethernet Switch und Ethernetkabel benötigt. Die WLAN Verbindungen sind in der Regel zu störanfällig.
   * https://www.amazon.de/dp/B01MU3WUX1
   * https://www.amazon.de/dp/B01N362YPG
@@ -61,10 +62,14 @@ muss etwas in die Trickkisten greifen und das OS Image für die RPIs selber hers
 
 * https://github.com/hypriot/image-builder-rpi
 
-Installieren von virtualbox und vagrant
+Installieren von virtualbox und vagrant mit Homebrew
+
+* https://brew.sh/
+* http://caskroom.io/
 
 ```
 $ brew cask install virtualbox
+$ brew cask install virtualbox-extension-pack
 $ brew cask install vagrant
 ```
 
@@ -108,9 +113,89 @@ $ sudo rpi-update
 $ sudo reboot
 ```
 
-### RPI Kernel Update
+### RPI Hypriot OS Kernel Build
 
 * https://github.com/hypriot/rpi-kernel
+
+Prüfen die vorhandenen Kernels im [Hypriot Deb Repo](https://packagecloud.io/Hypriot/rpi/debian)
+
+```
+$ ssh -i ~/.ssh/id_ed25519-rpi pirate@192.168.0.41
+$ sudo apt-cache madison raspberrypi-kernel
+```
+
+__Tipp__: Wenn der Kernel selbst gebaut werden muss, prüfe ob das "privileged: true" Flag im `Vagrantfile`gesetzt ist.
+
+* Starte einen lokalen HTTP Server für das _image-builder-rpi_ Projekt.
+* Prüfe die Informationen im `build_results` Verzeichnis und addiere den Pfad in der Datei `versions.config` im der `KERNEL_URL` Variable.
+
+```
+$ cat >docker-compose.yml <<EOF
+version: '3'
+services:
+  nginx: 
+    image: nginx:latest
+    volumes:
+      - ./nginx-cache:/var/cache/nginx
+      - ./nginx-pid:/var/run
+      - ./build_results:/usr/share/nginx/html:ro
+    ports:
+      - 8081:80
+    read_only: true
+EOF
+$ docker-compose up -d
+```
+
+Hier zur Ansicht meine `versions.config``
+
+```
+$ cat >versions.config <<EOF
+# config vars for the root file system
+HYPRIOT_OS_VERSION="v2.0.1"
+ROOTFS_TAR_CHECKSUM="d1e7e6d48a25b4a206c5df99ecb8815388ec6945e4f97e78413d5a80778d4137"
+
+# name of the ready made raw image for RPi
+RAW_IMAGE="rpi-raw.img"
+RAW_IMAGE_VERSION="v0.2.2"
+RAW_IMAGE_CHECKSUM="2fbeb13b7b0f2308dbd0d82780b54c33003ad43d145ff08498b25fb8bbe1c2c6"
+
+# specific versions of kernel/firmware and docker tools
+# export KERNEL_BUILD="20180422-141901"
+export KERNEL_BUILD="20181007-162516"
+# For testing a new kernel, use the CircleCI artifacts URL.
+# export KERNEL_URL=https://62-32913687-gh.circle-artifacts.com/0/home/circleci/project/output/20180320-092128/raspberrypi-kernel_20180320-092128_armhf.deb
+export KERNEL_URL=http://192.168.178.56:8081/20181007-162516/raspberrypi-kernel_20181007-162516_armhf.deb
+export KERNEL_VERSION="4.14.70"
+export DOCKER_CE_VERSION="18.06.1~ce~3-0~raspbian"
+export DOCKER_COMPOSE_VERSION="1.22.0"
+export DOCKER_MACHINE_VERSION="0.15.0"
+EOF
+```
+
+Wenn die Disk zu klein ist kann das _vagrant-disksize_ Plugin vielleicht helfen:
+
+* https://github.com/sprotheroe/vagrant-disksize
+
+```
+Vagrant.configure("2") do |config|
+
+    required_plugins = %w( vagrant-vbguest vagrant-disksize )
+    _retry = false
+    required_plugins.each do |plugin|
+        unless Vagrant.has_plugin? plugin
+            system "vagrant plugin install #{plugin}"
+            _retry=true
+        end
+    end
+
+    if (_retry)
+        exec "vagrant " + ARGV.join(' ')
+    end
+
+    config.vm.box = "ubuntu/trusty64"
+    config.disksize.size = "30GB"
+end
+```
 
 ## SD-Karten für den beehive PI-Cluster vorbereiten
 
@@ -250,6 +335,21 @@ $ export K8sCLUSTER=cluster-1
 $ ansible-playbook -u pirate --key=$SSH_KEY -i cluster -l $K8sCLUSTER kubernetes.yml
 ```
 
+__Todo__:
+
+* Kopieren der Images eines Release in eine Registry
+* Installation der PI's auf der Basis dieser Registry
+* Einrichten eines Mirrors
+* Einrichten eines DNS Server für alle Cluster
+* Test mit einem Unify Router via Ethernet
+  * WLAN Router nur für Crew
+  * Test mit weiteren AccessPoints
+  * DHCP?
+* Loadbalancer
+  * Metall LB
+* External DNS
+  * Noip Dynamic DNS
+
 ### Cluster vernichten
 
 Manchmal möchte man den Cluster abreissen und vielleicht in einer anderen Version neu bauen, deshalb gibt es auch ein Reset-Playbook:
@@ -262,5 +362,5 @@ __TIPP__: Phönix aus der Asche entstehen lassen
 
 Wer einen wirklich unbelastete Maschine benötigt, sollte allerdings lieber die SD Karte flashen und den RPI neu starten.
 
-Liebe Grüße
+Liebe Grüße</br>
 Peter <peter.rossbach@bee42.com>
