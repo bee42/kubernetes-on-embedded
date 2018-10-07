@@ -23,9 +23,8 @@ users:
     ssh_pwauth: true
     chpasswd: { expire: false }
     ssh_authorized_keys:
-      - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIYKls0megm6CSQfdb6L4HoIQmdsT80txj/vv1F8ihEF claus.frein+DO@bee42.com'
       - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFaMxEwf5lwpyjn1aazYqCsmegzmjBKGxJjK2+f5UarS nmietz@digitalocean'
-      - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBI0lCQhCayA9BuyUJfoOvQH3WWUNM7r/RLOd89iCFtg peter.rossbach@bee42.com'
+      - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFl546jxIfE2XAxHOBTsKL/KRC11eoNHP7Q8y4InJrfp peter.rossbach@bee42.com'
 
 # # Set the locale of the system
 # locale: "en_US.UTF-8"
