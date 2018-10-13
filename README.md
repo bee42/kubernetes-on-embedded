@@ -1,6 +1,6 @@
 # Kubernetes-On-Embedded
 
-Dies ist das Repo für unseren Blogpost https://bee42.com/de/blog/Kubernetes_Cluster_Embedded/, schaut mal rein!
+Dies ist das Repo für unseren Blogpost https://bee42.com/de/blog/tutorials/kubernetes-cluster-on-embedded/, schaut mal rein!
 
 ## Kubernetes 1.9 mit Docker 17.03
 
