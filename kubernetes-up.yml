@@ -27,3 +27,17 @@
         dest: /tmp/kubeadm_join
     - name: install and join k8s 
       script: "bootstrap.sh node {{network_address_master}} {{ kubernetes_version }}"
+
+- hosts: nodes-up
+  become: true
+  gather_facts: False
+  vars:
+    kubernetes_version: "{{ lookup('env', 'KUBERNETES_VERSION')| default('1.13.2',true) }}"
+    docker_version: "{{ lookup('env', 'DOCKER_VERSION')| default('18.09.1',true) }}"
+  tasks:
+    - name: Copy join-command
+      copy:
+        src: "{{playbook_dir}}/secrets/{{network_address_master}}/tmp/kubeadm_join"
+        dest: /tmp/kubeadm_join
+    - name: install and join k8s 
+      script: "bootstrap-up.sh node {{network_address_master}} {{ kubernetes_version }} {{ docker_version }}"

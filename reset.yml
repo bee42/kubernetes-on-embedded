@@ -4,7 +4,7 @@
   
   tasks:
     - name: delete k8s-cluster
-      command: kubeadm reset
+      command: kubeadm reset --force
     - name: remove kubernetes-config-folder 
       file:
         path: /etc/kubernetes

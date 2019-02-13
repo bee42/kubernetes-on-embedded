@@ -3,8 +3,39 @@
 # 1 - Master/node
 # 2 - IP Master
 # 3 - Kubernetes-version
+# 4 - Docker-version
 
 set -eu
+DOCKER_VERSION=$4
+export DOCKER_VERSION=${DOCKER_VERSION:-18.09.1}
+echo "
+Package: docker-ce
+Pin: version ${DOCKER_VERSION}.*
+Pin-Priority: 1000
+" > /etc/apt/preferences.d/docker-ce
+
+apt-get update
+apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+apt-get update && apt-get install -y docker-ce
+
+cat > /etc/docker/daemon.json <<EOF
+{
+  "storage-driver" : "overlay2",
+  "experimental" : true,
+  "metrics-addr" : "127.0.0.1:9323"
+}
+EOF
+systemctl restart docker
+
 
 K8S_VERSION=$3
 K8S_VERSION=${K8S_VERSION:-1.13.2}
