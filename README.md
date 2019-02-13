@@ -120,7 +120,7 @@ $ sudo reboot
 Prüfen die vorhandenen Kernels im [Hypriot Deb Repo](https://packagecloud.io/Hypriot/rpi/debian)
 
 ```
-$ ssh -i ~/.ssh/id_ed25519-rpi pirate@192.168.0.41
+$ ssh -i ~/.ssh/id_ed25519-rpi pirate@192.168.42.41
 $ sudo apt-cache madison raspberrypi-kernel
 ```
 
@@ -255,7 +255,7 @@ __Frage__: Wie bekommt eigentlich heraus welche IP dem PI vom DHCP Server zugeor
 ```
 # install nmap
 $ brew install nmap
-$ nmap -sn 192.168.0.0/24 # Durch Euer Netz ersetzen
+$ nmap -sn 192.168.42.0/24 # Durch Euer Netz ersetzen
 ```
 
 Das Passwort für den Nutzer __pirate__ lautet: **hypriot**.
@@ -279,11 +279,11 @@ Dafür benötigen wir zunächst ein Inhaltsverzeichnis. Wir haben mehrere Cluste
 
 ```
 [cluster-1-master]
-192.168.0.11
+192.168.42.11
 
 [cluster-1-nodes]
-192.168.0.12
-192.168.0.13
+192.168.42.12
+192.168.42.13
 
 [cluster-1:children]
 cluster-1-master
@@ -291,7 +291,7 @@ cluster-1-nodes
 
 [cluster-1:vars]
 fqdn_master="bee42-crew-01-001.local"
-network_address_master="192.168.0.11"
+network_address_master="192.168.42.11"
 
 [master:children]
 cluster-1-master
@@ -301,6 +301,19 @@ cluster-1-nodes
 
 ```
 
+Für eine K8s Cluster sollten die Maschinen eine fixe IP Adresse besitzen.
+Wir fixieren also die DHCP Records im Edge Max.
+
+![](images/EdgeMax-DHCP-configure.png)
+
+Die Maschinen müssen dann alle rebooted werden.
+
+Auf einem MAC kann man den DNS Cache mit folgendem Kommando erneuern:
+
+```
+sudo killall -HUP mDNSResponder
+```
+
 Ansible verbindet sich per SSH auf die zu verwaltenden Rechner, dort muss also öffentlicher SSH-Key hinterlegt sein. Falls Ihr noch keinen habt, hier ein kleines Beispiel:
 
 ```bash
@@ -308,19 +321,20 @@ Ansible verbindet sich per SSH auf die zu verwaltenden Rechner, dort muss also �
 $ ssh-keygen -t ed25519 -C "name@example.org"
 
 # Öffentlichen Schlüssel auf alle RPIs kopieren
-$ ssh-copy-id pirate@192.168.0.11
-$ ssh-copy-id pirate@192.168.0.12
+$ ssh-copy-id pirate@192.168.42.11
+$ ssh-copy-id pirate@192.168.42.12
 ...
 
 # Testen der Maschinenverfügbarkeit :
 $ export SSH_KEY=~/.ssh/id_ed25519
-$ ansible -u pirate --key=$SSH_KEY -i cluster -m ping all
-192.168.0.11 | success >> {
-    "changed": false, 
+$ export K8sCLUSTER=cluster-1
+$ ansible -u pirate --key=$SSH_KEY -i cluster -l $K8sCLUSTER -m ping all
+192.168.42.11 | success >> {
+    "changed": false,
     "ping": "pong"
 }
 
-192.168.0.12 | success >> {
+192.168.2.12 | success >> {
     "changed": false, 
     "ping": "pong"
 }
@@ -332,8 +346,33 @@ So, wenn alle Vorbereitungen abgeschlossen sind, kann der Kubernetes-Cluster erz
 
 ```bash
 $ export K8sCLUSTER=cluster-1
+$ export KUBERNETES_VERSION=1.13.2
+$ export DOCKER_VERSION=18.09.1
 $ ansible-playbook -u pirate --key=$SSH_KEY -i cluster -l $K8sCLUSTER kubernetes.yml
+$ ssh 192.168.42.11
+$ mkdir -p .kube
+$ sudo cp /etc/kubernetes/admin.conf .kube/config
+$ sudo chown -R pirate:pirate .kube/
+$ kubectl get nodes
+NAME                STATUS   ROLES    AGE     VERSION
+bee42-crew-04-001   Ready    master   8m53s   v1.12.0
+bee42-crew-04-002   Ready    <none>   6m32s   v1.12.0
+bee42-crew-04-003   Ready    <none>   6m22s   v1.12.0
+$ kubectl run my-shell --rm -i --tty --image alpine -- /bin/sh
+> ls
 ```
+
+```
+ssh <new machine>
+sudo useradd -m -p hypriot -s /bin/bash pirate
+sudo usermod -aG sudo pirate
+exit
+ssh-copy-id -i $SSH_KEY pirate@192.168.42.35
+```
+
+I2C:
+
+* http://www.netzmafia.de/skripten/hardware/RasPi/RasPi_I2C.html
 
 __Todo__:
 
@@ -347,6 +386,7 @@ __Todo__:
   * DHCP?
 * Loadbalancer
   * Metall LB
+    * https://medium.com/@JockDaRock/kubernetes-metal-lb-for-on-prem-baremetal-cluster-in-10-minutes-c2eaeb3fe813
 * External DNS
   * Noip Dynamic DNS
 
@@ -362,5 +402,25 @@ __TIPP__: Phönix aus der Asche entstehen lassen
 
 Wer einen wirklich unbelastete Maschine benötigt, sollte allerdings lieber die SD Karte flashen und den RPI neu starten.
 
+## Trouble on arm64
+
+* https://github.com/kubernetes/kubernetes/issues/64649
+* https://github.com/kubernetes/kubernetes/pull/66458/files
+
+```
+  --audit-log-maxage=30 \
+  --audit-log-maxbackup=3 \
+  --audit-log-maxsize=100 \
+  --authorization-mode=Node,RBAC \
+  --enable-swagger-ui=true \
+  --event-ttl=1h \
+  --insecure-bind-address=127.0.0.1 \
+  --runtime-config=rbac.authorization.k8s.io/v1alpha1 \
+  --v=2
+```
+
 Liebe Grüße</br>
 Peter <peter.rossbach@bee42.com>
+
+* https://gist.github.com/alexellis/fdbc90de7691a1b9edb545c17da2d975
+* https://www.trion.de/news/2018/07/06/kubernetes-raspberry-pi.html
